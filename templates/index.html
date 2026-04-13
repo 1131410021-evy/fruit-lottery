@@ -17,7 +17,7 @@
             background: white; padding: 15px; border-radius: 15px; width: 120px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-        .stat-label { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 5px; }
+        .stat-label {font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 5px;}  
         .stat-value { font-size: 18px; font-weight: bold; }
 
         /* The Main Game Area */
@@ -123,6 +123,39 @@
             document.getElementById('win-count').innerText = wins;
             document.getElementById('win-rate').innerText = ((wins / spins) * 100).toFixed(0) + "%";
         }
+
+
+
+        const spinBtn = document.getElementById('spin-btn');
+const creditsDisplay = document.getElementById('credits-val'); // Make sure your HTML has this ID
+
+spinBtn.addEventListener('click', () => {
+    fetch('/spin', { method: 'POST' }) // Must be POST to match your app.py
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            // 1. Update your 3 fruit images (using your IDs like 'slot1', etc.)
+            document.getElementById('slot1').src = `/static/images/${data.result[0]}`;
+            document.getElementById('slot2').src = `/static/images/${data.result[1]}`;
+            document.getElementById('slot3').src = `/static/images/${data.result[2]}`;
+
+            // 2. Update Credits
+            creditsDisplay.innerText = data.current_credits;
+
+            // 3. Play Sounds
+            if (data.won) {
+                new Audio('/static/sounds/OK.mp3').play();
+                alert("YOU WIN!");
+            } else {
+                new Audio('/static/sounds/loose.mp3').play();
+            }
+        });
+});
     </script>
+    
 </body>
 </html>
