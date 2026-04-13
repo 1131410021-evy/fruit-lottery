@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fruit Slot Machine</title>
+    <style>
+        body { 
+            background-color: #ffc0cb; /* Pink Background */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; padding: 20px; color: #333;
+            text-align: center;
+        }
+        .container { max-width: 900px; margin: auto; }
+        
+        /* The Stat Cards at the top */
+        .stats-row { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        .stat-card { 
+            background: white; padding: 15px; border-radius: 15px; width: 120px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .stat-label { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 5px; }
+        .stat-value { font-size: 18px; font-weight: bold; }
+
+        /* The Main Game Area */
+        .game-card { 
+            background: rgba(255, 255, 255, 0.4); padding: 30px; 
+            border-radius: 30px; border: 2px solid white; display: inline-block;
+        }
+        .slot-container { display: flex; justify-content: center; gap: 15px; margin: 20px 0; }
+        .slot { 
+            width: 150px; height: 150px; background: white; 
+            border-radius: 20px; border: 1px solid #eee; padding: 10px; object-fit: contain;
+        }
+
+        /* Buttons */
+        .btn-group { display: flex; justify-content: center; gap: 15px; margin-top: 10px;}
+        button { 
+            padding: 12px 30px; border-radius: 25px; border: none; 
+            font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.2s;
+        }
+        .btn-spin { background: #ff4b2b; color: white; box-shadow: 0 4px #d63031; }
+        .btn-reset { background: #95a5a6; color: white; box-shadow: 0 4px #7f8c8d; }
+        button:hover { opacity: 0.9; transform: scale(1.05); }
+        button:active { transform: translateY(2px); box-shadow: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="margin-bottom: 10px;">
+            <img src="/static/images/double.jpg" width="120" style="border-radius: 10px;">
+        </div>
+
+        <h1>Fruit Slot Machine</h1>
+        
+        <div class="stats-row">
+            <div class="stat-card"><div class="stat-label">Credits</div><div class="stat-value" id="credit-count">100</div></div>
+            <div class="stat-card"><div class="stat-label">Spins</div><div class="stat-value" id="spin-count">0</div></div>
+            <div class="stat-card"><div class="stat-label">Wins</div><div class="stat-value" id="win-count">0</div></div>
+            <div class="stat-card"><div class="stat-label">Last Score</div><div class="stat-value" id="last-score">0</div></div>
+            <div class="stat-card"><div class="stat-label">Win Rate</div><div class="stat-value" id="win-rate">0%</div></div>
+        </div>
+
+        <div class="game-card">
+            <div class="slot-container">
+                <img id="slot1" class="slot" src="/static/images/1.jpg">
+                <img id="slot2" class="slot" src="/static/images/2.jpg">
+                <img id="slot3" class="slot" src="/static/images/3.jpg">
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-spin" onclick="spin()">SPIN</button>
+                <button class="btn-reset" onclick="location.reload()">RESET</button>
+            </div>
+
+            <div style="margin-top: 25px;">
+                <img id="feedback-img" src="/static/images/ICON.jpg" width="100">
+                <p id="status-msg" style="font-weight: bold; font-size: 18px; margin-top: 10px;">Good Luck!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let spins = 0;
+        let wins = 0;
+
+        async function spin() {
+            // Play the "ding" sound on every spin
+            new Audio('/static/sounds/ding.mp3').play();
+
+            const response = await fetch('/spin', { method: 'POST' });
+            const data = await response.json();
+            
+            if (data.error) { 
+                alert(data.error); 
+                return; 
+            }
+
+            spins++;
+            
+            // Update Slots
+            document.getElementById('slot1').src = '/static/images/' + data.result[0];
+            document.getElementById('slot2').src = '/static/images/' + data.result[1];
+            document.getElementById('slot3').src = '/static/images/' + data.result[2];
+            
+            // Update Text Data
+            document.getElementById('credit-count').innerText = data.current_credits;
+            document.getElementById('spin-count').innerText = spins;
+
+            const feedbackImg = document.getElementById('feedback-img');
+            const statusMsg = document.getElementById('status-msg');
+
+            if (data.won) {
+                wins++;
+                feedbackImg.src = "/static/images/WIN.jpg";
+                statusMsg.innerText = "YOU WON! (+50)";
+                new Audio('/static/sounds/OK.mp3').play();
+            } else {
+                feedbackImg.src = "/static/images/LOOSE.jpg";
+                statusMsg.innerText = "Too bad, try again!";
+                new Audio('/static/sounds/loose.mp3').play();
+            }
+
+            // Update Win Rate Stats
+            document.getElementById('win-count').innerText = wins;
+            document.getElementById('win-rate').innerText = ((wins / spins) * 100).toFixed(0) + "%";
+        }
+    </script>
+</body>
+</html>
